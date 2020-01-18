@@ -1,0 +1,52 @@
+# This three func intended to store telegram message object in sqlite (built in database of python)
+# There we are converts object to string ang back, because sqlite can't store objects. 
+# There are also another ways to do it.
+# Store message in DB: First we getting content of the message 
+# (str link, some messages has list around of string) to append it to the sending message.
+# Next we getting caption (text) of the message. Finally we getting type of the message.
+# Send message back from DB: First use get_str_message_send_method() with saved content type as parameter.
+# Next specify same content for every parametr (text=post_content, audio=post_content ...)
+
+def get_message_send_method(message, check_func=helpers.effective_message_type):  # Get send method by message type
+    """
+    With it, you can echo for the most popular message type. The library doesn't have a built-in 'autodetect' method 
+    to get the appropriate method for the answer. helpers.effective_message_type() returns str name of content.
+    """
+    if check_func(message) == 'photo':
+        method = bot.send_photo  # method
+    elif check_func(message) == 'video':
+        method = bot.send_video  # method
+    elif check_func(message) == 'audio':
+        method = bot.send_audio  # method
+    elif check_func(message) == 'text':
+        method = bot.send_message  # method
+    else:
+        message.reply_text('I can detect mathod only for photo, video, audio or text')
+        return
+    return method
+
+
+def get_message_content(message):
+    """
+    Content it is just a simple telegram link. helpers.effective_message_type() returns str name of content.
+    To send back message by method also needs to specify appropriated content from current message.
+    """
+    if helpers.effective_message_type(message) == 'photo':
+        content = message.photo[-1].file_id  # str
+    elif helpers.effective_message_type(message) == 'video':
+        content = message.video.file_id  # str
+    elif helpers.effective_message_type(message) == 'audio':
+        content = message.audio.file_id  # str
+    elif helpers.effective_message_type(message) == 'text':
+        content = message.text  # str
+    else:
+        return
+    return content
+
+
+def get_str_message_send_method(message):  # Get send method by string stored in DB
+    """
+    With it you can get send method by string (output of get_message_content). This func calls get_message_send_method. 
+    """
+    return get_message_send_method(message, check_func=lambda arg: arg)
+
