@@ -1,11 +1,13 @@
-# This three func intended to store telegram message object in sqlite (built in database of python)
+# This three func intended to store telegram message object in sqlite (built in database of python) or
+# echo on any message with one method despite of the message content.
 # There we are converts object to string ang back, because sqlite can't store objects. 
-# There are also another ways to do it.
-# Store message in DB: First we getting content of the message 
-# (str link, some messages has list around of string) to append it to the sending message.
+# There are also another ways to do it. We don't storing whole message object, only important elements (text + link)
+# Storing message in DB: First we getting content of the message 
+# (str link or list) to append it to the sending message.
 # Next we getting caption (text) of the message. Finally we getting type of the message.
-# Send message back from DB: First use get_str_message_send_method() with saved content type as parameter.
-# Next specify same content for every parametr (text=post_content, audio=post_content ...)
+# After saving it, to send message we have to determine appropriate method to sends message
+# by message content via get_str_message_send_method func with output of get_message_content func as a parameter
+
 
 def get_message_send_method(message, check_func=helpers.effective_message_type):  # Get send method by message type
     """
@@ -50,3 +52,19 @@ def get_str_message_send_method(message):  # Get send method by string stored in
     """
     return get_message_send_method(message, check_func=lambda arg: arg)
 
+
+#  Example:
+ 
+ 
+#  Storing: (With context.chat_data (dict) you can pass data from func to func)
+
+context.chat_data['message_content'] = get_message_content(update.message)  # str link
+context.chat_data['message_caption'] = update.message.caption  # text of message
+context.chat_data['post_content_type'] = helpers.effective_message_type(update.message) # str type of content
+
+
+#   Sending:
+    
+message_send_method = get_str_message_send_method(context.chat_data['post_content_type'])  # Method
+message_send_method(chat_id=user_id, text=post_content, audio=post_content, video=post_content, photo=post_content, 
+                    caption=post_caption)
