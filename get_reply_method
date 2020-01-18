@@ -66,5 +66,6 @@ context.chat_data['post_content_type'] = helpers.effective_message_type(update.m
 #   Sending:
     
 message_send_method = get_str_message_send_method(context.chat_data['post_content_type'])  # Method
-message_send_method(chat_id=user_id, text=post_content, audio=post_content, video=post_content, photo=post_content, 
-                    caption=post_caption)
+message_send_method(chat_id=update.effective_user.id, text=post_content, audio=post_content, video=post_content, 
+                    photo=post_content, caption=post_caption)  # update.effective_user.id - sender id.
+                    # Don't forget to past appropriate id
