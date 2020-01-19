@@ -8,7 +8,7 @@ def start_reg(update, context):
 
 # noinspection PyUnusedLocal
 def user_age(update, context):
-    keyboard = [['male'], ['female'], ['skip'], ['cancel'],]
+    keyboard = [['male'], ['female'], ['back', 'skip'], ['cancel'],]
     update.message.reply_text(f'step {USER_GENDER} out of  {STEPS_COUNT}.\n\nChoose your gender.',
                                 reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard))
 
@@ -16,9 +16,6 @@ def user_age(update, context):
 
 
 def user_goal_handler(update, context):
-    """ No afraid to no get user_data in the last 'elif' because of a handler in the state will catch back_r and go to
-        the corresponding function, so if a user will type 'back' key phrase every time, he will never to finish
-        the registration. """
 
     context.chat_data['user'] = {}  # Create dict for profile_data
 
@@ -41,7 +38,7 @@ def user_goal_handler(update, context):
 def user_age_handler(update, context):
     # # # PROCESS OLD MESSAGE # # #
     message_text = update.message.text.lower().strip()
-    age = ''.join([letter for letter in update.message.text if letter.isdigit()])  # Get digits from message
+    age = ''.join([letter for letter in update.message.text if letter.isdigit()])  # Get digits from the message
     if 0 < len(age) < 3:
         context.chat_data['user']['age'] = message_text
     elif not 'skip' in message_text and not 'back' in message_text:
