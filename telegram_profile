@@ -1,19 +1,18 @@
 # noinspection PyUnusedLocal
 def start_reg(update, context):
-    update.message.reply_text('''Отличное решение!
-После регистации вы сможете не только искать анкеты, но и сами будете доступны для поиска.
-Во время регистрации я у тебя спрошу пол, возраст, фото, и цель (общение или знакомство).
-ЛЮБОЕ из этих полей можно оставить пустым.''', reply_markup=get_reply_markup('Поехали!', 'Отмена'))
+    keyboard = [['start'], ['cancel'],]
+    update.message.reply_text('Great! During the registration I will ask you for\  # Escape line break
+    gender, age, country, city, photos and comment.', reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard))
     return USER_GOAL
 
 
 # noinspection PyUnusedLocal
-def user_goal(update, context):
-    update.message.reply_text(f'Шаг {USER_GOAL} из {STEPS_COUNT}.\n\nВы хотите общаться или знакомиться?',
-                              reply_markup=get_reply_markup(['Общаться', 'Знакомиться'], 'Общаться и знакомиться',
-                                                            ['Назад', 'Пропустить'], 'Отмена'))
+def user_age(update, context):
+    keyboard = [['male'], ['female'], ['skip'], ['cancel'],]
+    update.message.reply_text(f'step {USER_GENDER} out of  {STEPS_COUNT}.\n\nChoose your gender.',
+                                reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard))
 
-    return USER_GENDER
+    return USER_AGE
 
 
 def user_goal_handler(update, context):
@@ -25,35 +24,18 @@ def user_goal_handler(update, context):
 
     # # # PROCESS OLD MESSAGE # # #
     message_text = update.message.text.lower().strip()
-    if 'общат' in message_text:
-        context.chat_data['user']['goal'] = ['Цель', 'Хочет общаться']
-    elif 'знакомит' in message_text:
-        context.chat_data['user']['goal'] = ['Цель', 'Хочет знакомиться']
-    elif ' и ' in message_text:
-        context.chat_data['user']['goal'] = ['Цель', 'Общаться и Знакомиться']
-    elif not skip_r.match(message_text) and not back_r.match(message_text):
-        send_misunderstand_text(update, '"Общаться", "Знакомиться" или "Общаться и Знакомиться"')
-        return USER_GENDER
+    if 'male' in message_text:
+        context.chat_data['user']['gender'] = 'male'
+    elif 'female' in message_text:
+        context.chat_data['user']['gender'] = 'female'
+    elif not 'skip' in message_text and not 'back' in message_text:
+        send_misunderstand_text(update, '"male" or "female."')
+        return USER_GENDER  # Return previous state
     # # # SEND NEW MESSAGE # # #
-    update.message.reply_text(f'Шаг {USER_GENDER} из {STEPS_COUNT}.\n\nУкажите ваш пол.',
-                              reply_markup=get_reply_markup('Я девушка', 'Я парень', ['Назад', 'Пропустить'], 'Отмена'))
-    return USER_AGE
-
-
-def user_gender_handler(update, context):
-    # # # PROCESS OLD MESSAGE # # #
-    message_text = update.message.text.lower().strip()
-    if 'дев' in message_text:
-        context.chat_data['user']['gender'] = ['Пол', 'Я девушка']
-    elif 'пар' in message_text:
-        context.chat_data['user']['gender'] = ['Пол', 'Я парень']
-    elif not skip_r.match(message_text) and not back_r.match(message_text):
-        send_misunderstand_text(update, '"Парень" или "Девушка"')
-        return USER_AGE
-    # # # SEND NEW MESSAGE # # #
-    update.message.reply_text(f'Шаг {USER_AGE} из {STEPS_COUNT}.\n\nУкажите ваш возраст.',
-                              reply_markup=get_reply_markup(['Назад', 'Пропустить'], 'Отмена'))
-    return USER_COUNTRY
+    keyboard = [['skip'], ['cancel'],]
+    update.message.reply_text(f'Step {USER_AGE} out of  {STEPS_COUNT}.\n\nHow old are you?',
+                              reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard))
+    return USER_Country
 
 
 def user_age_handler(update, context):
@@ -61,19 +43,18 @@ def user_age_handler(update, context):
     message_text = update.message.text.lower().strip()
     age = ''.join([letter for letter in update.message.text if letter.isdigit()])  # Get digits from message
     if 0 < len(age) < 3:
-        context.chat_data['user']['age'] = ['Возраст', age]
-    elif not skip_r.match(message_text) and not back_r.match(message_text):
-        send_misunderstand_text(update, 'Свой возраст. Например: "25 лет."')
+        context.chat_data['user']['age'] = message_text
+    elif not 'skip' in message_text and not 'back' in message_text:
+        send_misunderstand_text(update, 'How old are you. For example, type: "25 years."')
         return USER_COUNTRY
     # # # SEND NEW MESSAGE # # #
-    if update.message.chat.type == 'group':
-        context.chat_data['location_button'] = ''  # No location for public chat
+    if update.message.chat.type == 'group':  # No location for public chat
+        context.chat_data['location_button'] = ''  # Empty button - remove button from keyboard  
     else:
-        context.chat_data['location_button'] = [KeyboardButton(text="Отправить местоположение", request_location=True)]
-    update.message.reply_text(f'''Шаг {USER_COUNTRY} из {STEPS_COUNT}.\n
-Напишите вашу страну.''', reply_markup=ReplyKeyboardMarkup([context.chat_data['location_button'],
-                                                            ['Назад', 'Пропустить'], ['Отмена']],
-                                                           resize_keyboard=True, one_time_keyboard=True))
+        context.chat_data['location_button'] = [KeyboardButton(text="Send country location", request_location=True)]
+    keyboard = [context.chat_data['location_button'], ['Back', 'Skip'], ['Cancel']],
+    update.message.reply_text(f'Step {USER_COUNTRY} out of  {STEPS_COUNT}.\n
+Type toyr country.', reply_markup=ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True))
     # pdb.set_trace()
     return USER_CITY
 
@@ -83,33 +64,32 @@ def user_country_handler(update, context):  # user_country don't have validation
     # # # PROCESS OLD MESSAGE # # #
     if update.message.location:  # If user sent location by button
         return user_city_handler(update, context)
-    elif not skip_r.match(update.message.text.strip()) and not back_r.match(update.message.text.strip()):
-        context.chat_data['user']['country'] = ['Страна', update.message.text.strip()]
+    elif not 'skip' in update.message.text.lower().strip()) and not 'back' in update.message.text.lower().strip()):
+        context.chat_data['user']['country'] = update.message.text.strip()  # Without .lower()
     else:
         return user_city_handler(update, context)  # Will skipped twice. Go ask photos immediately:
-    update.message.reply_text(f'''Шаг {USER_COUNTRY}.5 из {STEPS_COUNT}.\n
-Напишите ваш город.''', reply_markup=ReplyKeyboardMarkup([context.chat_data['location_button'],
-                                                          ['Назад', 'Пропустить'], ['Отмена']], resize_keyboard=True,
-                                                         one_time_keyboard=True))
+    # # # SEND NEW MESSAGE # # #
+    keyboard = [context.chat_data['location_button'], ['Back', 'Skip'], ['Cancel']]
+    update.message.reply_text(f'Step {USER_COUNTRY}.5 out of  {STEPS_COUNT}.\n\n\
+    Type your city.', reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=True)))
     return USER_PHOTOS
 
 
 def user_city_handler(update, context):  # user_city don't have validation
     # Do not create var message_text because it can not exist
+    #  Maybe no necessary to get the country from the location, as the country may be determined incorrectly ?
+    #  Maybe no need to get city from the location, as the user may want to specify only a country ?
     # # # PROCESS OLD MESSAGE # # #
     if update.message.location:  # If location was not send before
         get_location_from_coordinates(update.message.location, context)  # user_city exist only if location was send
-        #  Maybe no necessary to get the country from the location, as the country may be determined incorrectly ?
-        #  Maybe no need to get city from the location, as the user may want to specify only a country ?
-    elif not skip_r.match(update.message.text.strip()) and not back_r.match(update.message.text.strip()):
-        context.chat_data['user']['city'] = ['Город', update.message.text.strip()]
+    elif not 'skip' in update.message.text.lower().strip()) and not 'back' in update.message.text.lower().strip()):
+        context.chat_data['user']['city'] = update.message.text.strip()  # Without .lower()
     # # # SEND NEW MESSAGE # # #
-    photo_keyboard = ['', 'Использовать фотографии профиля', '', ['Назад', 'Пропустить'], 'Отмена']  # '' - placeholders
+    photo_keyboard = ['', 'Use account photos', '', ['Back', 'Skip'], 'Cancel']  # '' - placeholders
     context.chat_data['photo_keyboard'] = context.chat_data.get('photo_keyboard', photo_keyboard)  # If user go back
-    update.message.reply_text(f'''Шаг {USER_CITY} из {STEPS_COUNT}.\n
-Прикрепите одну или несколько фотографий во вложении,
-которые будут отображаться вместе с вашей анкетой.
-Когда закончите - напишите напишите "готово".''', reply_markup=get_reply_markup(photo_keyboard))
+    update.message.reply_text(f'Step {USER_CITY} out of  {STEPS_COUNT}.\n\n\
+    pin photos to the message, Type "finish".''', reply_markup=ReplyKeyboardMarkup(
+    keyboard, resize_keyboard=True, one_time_keyboard=True)))
     return USER_COMMENT
 
 
@@ -117,15 +97,15 @@ def few_photos_handler(update, context):  # Activates if user send a photo
     photo = update.message.photo[-1].file_id  # [-1] - Choose photo with best quality
     new_id = update.message.media_group_id
     old_id = context.chat_data.setdefault('old_media_group_id', int())  # For case if user choose profile_photos option
-    context.chat_data['photo_keyboard'][0] = 'Готово'  # Preparing for update photo_keyboard
-    context.chat_data['photo_keyboard'][2] = 'Удалить выбранные фотографии'
+    context.chat_data['photo_keyboard'][0] = 'Finish'  # Preparing for update photo_keyboard
+    context.chat_data['photo_keyboard'][2] = 'Remove selected photos'
     context.chat_data['photo_keyboard'][3][1] = ''  # Remove skip option from keyboard. This is list (one line)
 
     if photo not in context.chat_data.setdefault('photos', list()):  # If not exist:
         context.chat_data['photos'].append(photo)
     if old_id != new_id:  # don't send message "add else photo" for every photo in message/album
-        update.message.reply_text('Добавить еще фотографии?',
-                                  reply_markup=get_reply_markup(context.chat_data['photo_keyboard']))
+        update.message.reply_text('Add more photos?', reply_markup=ReplyKeyboardMarkup(
+    context.chat_data['photo_keyboard'], resize_keyboard=True, one_time_keyboard=True))
     context.chat_data['old_media_group_id'] = new_id  # Already old :)
     return USER_COMMENT
 
@@ -138,30 +118,25 @@ def user_photos_handler(update, context):
         profile_photos = [photo[-1].file_id for photo in bot.get_user_profile_photos(update.effective_user.id).photos]
         if profile_photos:
             context.chat_data['photos'] = [photo for photo in profile_photos if photo not in photos]  # Unique
-            context.chat_data['photo_keyboard'][0] = 'Готово'
+            context.chat_data['photo_keyboard'][0] = 'Finish'
             context.chat_data['photo_keyboard'][1] = ''  # Remove get_photos_profile option from keyboard
-            context.chat_data['photo_keyboard'][2] = 'Удалить выбранные фотографии'
+            context.chat_data['photo_keyboard'][2] = 'Remove selected photos'
             context.chat_data['photo_keyboard'][3][1] = ''  # Remove skip option from keyboard. This is list (one line)
-            update.message.reply_text('Добавить еще фотографии?',
-                                      reply_markup=get_reply_markup(context.chat_data['photo_keyboard']))
+            update.message.reply_text('Add more photos?', reply_markup=get_reply_markup(context.chat_data['photo_keyboard']))
         else:
-            update.message.reply_text('У вашего профиля нет фотографий.')
+            update.message.reply_text('Your profile has no photos..')
         return USER_COMMENT  # User may wish to add else photos after inserting photos from account
-    elif 'удалить' in message_text:
+    elif 'remove' in message_text:
         #  dict['key'] = [] and go back later, it will be proposing to delete even if a list is empty
         del context.chat_data['photos']  # del because checking for exists, not empties. If you will write just
         context.chat_data['photo_keyboard'] = ['', 'Использовать фотографии профиля', '',
-                                               ['Назад', 'Пропустить'], 'Отмена']  # Return keyboard for originated form
+                                               ['Back', 'Skip'], 'Cancel']  # Return keyboard for originated form
         update.message.reply_text('Удалено.\n\nДобавить еще фотографии?',
                                   reply_markup=get_reply_markup(context.chat_data['photo_keyboard']))
         return USER_COMMENT
     # # # SEND NEW MESSAGE # # #
-    update.message.reply_text(f'''Шаг {USER_PHOTOS} из {STEPS_COUNT}.
-
-Если хотите добавить какую либо важную
-информацию к вашей анкете, то добавьте ее сейчас. Например
-"Я вегетарианец". Эта информация будет отображаться вместе с вашей анкетой.''',
-                              reply_markup=get_reply_markup(['Назад', 'Пропустить'], 'Отмена'))
+    update.message.reply_text(f'Step {USER_PHOTOS} out of  {STEPS_COUNT}.\n\nAny additional info.',
+                              reply_markup=get_reply_markup(['Back', 'Skip'], 'Cancel'))
     return USER_CONFIRM
 
 
@@ -169,11 +144,11 @@ def user_comment_handler(update, context):
     # No validation for comment. Last step can't get back_r in update
     # # # PROCESS OLD MESSAGE # # #
     message_text = update.message.text.lower().strip()
-    if not skip_r.match(message_text):
-        context.chat_data['user']['comment'] = ['Комментарий', update.message.text.strip()]
+    if not 'skip' message_text:
+        context.chat_data['user']['comment'] = update.message.text.strip()]
     # # # SEND NEW MESSAGE # # #
-    update.message.reply_text('Так будет выглядеть ваш профайл:',
-                              reply_markup=get_reply_markup(['Назад', 'Завершить'], 'Отмена'))
+    update.message.reply_text('Your profile will look like this:',
+                              reply_markup=get_reply_markup(['Back', 'Finish'], 'Cancel'))
     show_profile(update.effective_user.id, context.chat_data['user'],
                  context.chat_data.get('photos', DEFAULT_PHOTO)[0])
     return END_REG
@@ -192,6 +167,5 @@ def user_confirm_handler(update, context):
     if 'завершить' in message_text:
         insert_user(update.effective_user.id, context.chat_data['user'], context.chat_data.get('photos', list()))
         return ConversationHandler.END
-    elif not back_r.match(message_text):
-        send_misunderstand_text(update, '"Завершить" для завершения регистрации, "Назад" если хотите внести изменения '
-                                        'и "Отмена" для отмены регистарции')
+    elif not 'back' in message_text:
+        send_misunderstand_text(update, '"Finish", "back", or "Cancel"')
