@@ -279,8 +279,8 @@ conversation_registration_handler = ConversationHandler(
 )
 
 if __name__ == '__main__':
-    token = '838004799:AAH-oYELvUK5gHuWB5AOeJUtjmA9Ev1WwtA'
-    yandex_api_key = "a1fa5962-4637-45fa-87ce-d8649a4b8b3e"
+    token = 'YOUR TOKEN'
+    yandex_api_key = "YOR TOKEN"
 
     logging.basicConfig()
     PROXY_URL = 'https://telegg.ru/orig/bot'  # Public TG proxy if TG blocked into your country
