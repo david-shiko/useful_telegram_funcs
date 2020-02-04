@@ -186,7 +186,7 @@ def ask_user_confirm(update, context):
     context.chat_data['message'] = update.message.reply_text('Your profile will look like this:',
                                                              reply_markup=ReplyKeyboardMarkup(keyboard,
                                                                                               resize_keyboard=True))
-    show_profile(update.effective_user.id, context.chat_data['user'],
+    show_profile(update.message.chat_id, context.chat_data['user'],  # Was update.effective_user.id instead of update.message.chat_id
                  context.chat_data.get('photos', DEFAULT_PHOTO)[0])
     return END_REG
 
